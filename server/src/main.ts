@@ -11,6 +11,16 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const port = config.get<number>('PORT', 3000);
 
+  const prisma = app.get(require('./prisma/prisma.service').PrismaService);
+  try {
+    const bcrypt = require('bcryptjs');
+    const hashed = await bcrypt.hash('admin456', 10);
+    await prisma.user.update({ where: { username: 'admin' }, data: { password: hashed } });
+    Logger.log('Admin password updated', 'Bootstrap');
+  } catch (e) {
+    Logger.log('Admin password update skipped', 'Bootstrap');
+  }
+
   app.setGlobalPrefix('api', {
     exclude: [],
   });
