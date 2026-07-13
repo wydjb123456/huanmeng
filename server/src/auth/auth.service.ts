@@ -179,6 +179,19 @@ export class AuthService {
     return { success: true };
   }
 
+  async resetPassword(username: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { username } });
+    if (!user) throw new UnauthorizedException('用户不存在');
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { username },
+      data: { password: hashed },
+    });
+
+    return { success: true };
+  }
+
   private issueToken(id: number, username: string, balance: number, role: Role) {
     const token = this.jwt.sign({ sub: id, username, role });
     // 测试账号（id=1）积分无限

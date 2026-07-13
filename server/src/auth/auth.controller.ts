@@ -35,4 +35,9 @@ export class AuthController {
   changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
     return this.auth.changePassword(req.user.userId, dto);
   }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: { username: string; newPassword: string }) {
+    return this.auth.resetPassword(dto.username, dto.newPassword);
+  }
 }
