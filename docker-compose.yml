@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ppt_poster_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ppt_admin
+      POSTGRES_PASSWORD: change_me_in_production
+      POSTGRES_DB: ppt_poster_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ppt_admin -d ppt_poster_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ppt_poster_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  server:
+    build: ./server
+    container_name: ppt_poster_server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://ppt_admin:change_me_in_production@postgres:5432/ppt_poster_db?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      EVOLINK_API_KEY: ${EVOLINK_API_KEY}
+      JWT_SECRET: ${JWT_SECRET:-change_me_to_random_32_chars}
+      JWT_EXPIRES_IN: 7d
+      PORT: 3000
+      NODE_ENV: production
+      UPLOAD_DIR: /app/uploads
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads_data:/app/uploads
+
+  client:
+    build: ./client
+    container_name: ppt_poster_client
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:

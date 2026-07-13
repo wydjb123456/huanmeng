@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String?  @unique
+  password  String
+  balance   Int      @default(0)
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  works   Work[]
+  coupons Coupon[] @relation("CouponUsage")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Work {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  prompt      String
+  type        String   @default("ppt")  // 'ppt' | 'poster' | 'word'
+  style       String   @default("business")
+  mode        String   @default("fast")  // 'fast' | 'fine'
+  category    String   @default("business")  // business/academic/product/education/marketing/personal
+  language    String   @default("zh")  // zh/en/bilingual
+  detailLevel String   @default("standard")  // brief/standard/detailed
+  aspectRatio String   @default("16:9")  // 16:9/4:3/9:16/1:1/2:3/3:4
+  pageCount   Int      @default(9)
+  taskId      String?
+  status      WorkStatus @default(pending)
+  progress    Int      @default(0)
+  previewUrl  String?
+  pdfUrl      String?
+  documentUrl String?  // Word 文档 .docx 路径
+  resolution  String   @default("2K")  // 1K/2K/4K（图片生成分辨率）
+  quality     String   @default("high")  // low/medium/high（图片渲染质量）
+  styleTag    String?  // ISCS 国际风格标签，如 EAS-JP-MIN-01
+  error       String?
+  referenceImages String?  // 海报参考图 JSON 数组字符串
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  slides      Slide[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+}
+
+enum WorkStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model Slide {
+  id        Int      @id @default(autoincrement())
+  workId    Int
+  work      Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+  idx       Int      // 展示顺序，从 0 开始
+  title     String
+  content   String   // 该页要点 / 提示词
+  taskId    String?  // 精细模式下每页单独的任务 ID
+  status    SlideStatus @default(pending)
+  imageUrl  String?
+  error     String?
+  referenceImage String?  // PDF 导入时该页的参考图 URL
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workId])
+  @@unique([workId, idx])
+}
+
+enum SlideStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model Coupon {
+  id        Int       @id @default(autoincrement())
+  code      String    @unique
+  amount    Int
+  status    CouponStatus @default(unused)
+  usedById  Int?
+  usedBy    User?     @relation("CouponUsage", fields: [usedById], references: [id])
+  usedAt    DateTime?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([status])
+}
+
+enum CouponStatus {
+  unused
+  used
+  expired
+  disabled
+}
+
+model AdminOperation {
+  id            Int       @id @default(autoincrement())
+  adminId       Int
+  targetUserId  Int?
+  action        String    // balance_adjust | coupon_generate
+  delta         Int?
+  reason        String?
+  createdAt     DateTime  @default(now())
+
+  @@index([targetUserId])
+  @@index([adminId])
+}
+
+model EmailVerificationCode {
+  id          Int      @id @default(autoincrement())
+  email       String
+  codeHash    String   // bcrypt 哈希，不存明文
+  attempts    Int      @default(0)
+  consumed    Boolean  @default(false)
+  ip          String?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([email])
+  @@index([ip])
+}
+
+model Template {
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String
+  thumbnail   String
+  promptTemplate String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}

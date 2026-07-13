@@ -1,0 +1,17 @@
+{
+  "name": "ppt-poster-generator",
+  "version": "0.1.0",
+  "description": "PPT/海报生成网站 - 技术验证阶段",
+  "type": "module",
+  "scripts": {
+    "verify:api": "node verify/01-test-api.js",
+    "verify:split": "node verify/02-split-image.js",
+    "verify:pdf": "node verify/03-generate-pdf.js",
+    "verify:all": "node verify/04-full-pipeline.js"
+  },
+  "dependencies": {
+    "sharp": "^0.33.5",
+    "pdf-lib": "^1.17.1",
+    "dotenv": "^16.4.5"
+  }
+}

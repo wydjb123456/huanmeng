@@ -1,0 +1,396 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Italianno&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+
+  /* 编辑式显示字体：Playfair（拉丁文）+ 毛笔字（中文） */
+  .font-display {
+    font-family: 'Playfair Display', 'Ma Shan Zheng', 'Noto Serif SC', serif;
+    font-feature-settings: 'liga', 'dlig';
+  }
+
+  /* 中文毛笔书法字体 */
+  .font-cal-cn {
+    font-family: 'Ma Shan Zheng', 'Noto Serif SC', 'PingFang SC', serif;
+  }
+
+  /* 中文衬线（庄重） */
+  .font-serif-cn {
+    font-family: 'Noto Serif SC', 'PingFang SC', 'Songti SC', serif;
+  }
+
+  /* 意大利花体（用于斜体强调字） */
+  .font-script {
+    font-family: 'Italianno', 'Playfair Display', cursive;
+    font-weight: 400;
+  }
+
+  /* 罗马大写衬线（用于小标编号） */
+  .font-roman {
+    font-family: 'Cinzel', 'Playfair Display', serif;
+    letter-spacing: 0.15em;
+  }
+
+  /* 哥特体（用于特殊装饰） */
+  .font-gothic {
+    font-family: 'UnifrakturMaguntia', 'Playfair Display', serif;
+  }
+
+  body {
+    @apply bg-ink-50 text-ink-900 antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    font-variation-settings: 'opsz' 32;
+  }
+
+  ::selection {
+    @apply bg-primary-500/20 text-primary-900;
+  }
+
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-300 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-400;
+  }
+}
+
+@layer components {
+  /* 磨砂玻璃卡片 */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40;
+  }
+
+  .glass-dark {
+    @apply bg-ink-900/70 backdrop-blur-xl border border-white/10;
+  }
+
+  /* 主按钮：编辑式 — 深色扁平，大写间距 */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-ink-900 text-white text-sm tracking-[0.2em] uppercase transition-all;
+    @apply hover:bg-ink-800 hover:gap-3 active:scale-[0.98];
+    @apply disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-ink-900;
+  }
+
+  /* 幽灵按钮：编辑式 — 线条边框 */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent text-ink-900 text-sm tracking-[0.2em] uppercase border border-ink-900 transition-all;
+    @apply hover:bg-ink-900 hover:text-white active:scale-[0.98];
+  }
+
+  /* 输入框：编辑式 — 极简边框，无圆角 */
+  .input-base {
+    @apply w-full px-4 py-3 bg-white border border-ink-200 text-ink-900 placeholder-ink-400 transition-all;
+    @apply focus:outline-none focus:border-ink-900;
+  }
+
+  /* 卡片：编辑式 — 极简边框，无圆角 */
+  .card {
+    @apply bg-white border border-ink-200/70;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lift hover:-translate-y-0.5 hover:border-ink-400;
+  }
+
+  /* Skeleton 闪烁 */
+  .skeleton {
+    @apply bg-gradient-to-r from-ink-100 via-ink-200 to-ink-100 bg-[length:200%_100%] animate-shimmer;
+  }
+
+  /* 渐变文字 */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-accent-500 to-primary-600;
+  }
+
+  /* 标签 */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-2xs font-medium;
+  }
+
+  /* 编辑式编号（罗马大写 + 衬线斜体，艺术杂志风） */
+  .editorial-number {
+    font-family: 'Cinzel', 'Playfair Display', serif;
+    font-style: normal;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  /* 大字号显示文字（Playfair + 毛笔字 fallback） */
+  .display-hero {
+    font-family: 'Playfair Display', 'Ma Shan Zheng', 'Noto Serif SC', serif;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.05;
+  }
+
+  /* 意大利花体强调字（用于斜体单词，如"作品"） */
+  .script-accent {
+    font-family: 'Italianno', 'Playfair Display', cursive;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 1;
+  }
+
+  /* 中文毛笔书法 */
+  .cal-cn {
+    font-family: 'Ma Shan Zheng', 'Noto Serif SC', serif;
+  }
+
+  /* 文字链接（替代按钮，更艺术） */
+  .link-art {
+    @apply inline-flex items-center gap-2 text-sm tracking-wide uppercase transition-all;
+    @apply hover:gap-3;
+  }
+
+  .link-art::after {
+    content: '→';
+    @apply transition-all;
+  }
+
+  /* 艺术框架 */
+  .art-frame {
+    @apply relative overflow-hidden;
+  }
+
+  .art-frame::after {
+    content: '';
+    @apply absolute inset-0 pointer-events-none;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  /* 文字浮现动画 */
+  .reveal-up {
+    animation: reveal-up 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes reveal-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 慢速淡入 */
+  .fade-slow {
+    animation: fade-slow 2s ease-out both;
+  }
+
+  @keyframes fade-slow {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* ============ 滚动入场动画系统 ============ */
+  /* 基础类：默认透明 + 上移，进入视口后 .is-revealed 触发 */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  /* 变体：从左滑入 */
+  .reveal--left {
+    transform: translateX(-40px);
+  }
+  .reveal--left.is-revealed {
+    transform: translateX(0);
+  }
+  /* 变体：从右滑入 */
+  .reveal--right {
+    transform: translateX(40px);
+  }
+  .reveal--right.is-revealed {
+    transform: translateX(0);
+  }
+  /* 变体：缩放淡入 */
+  .reveal--scale {
+    transform: scale(0.92);
+  }
+  .reveal--scale.is-revealed {
+    transform: scale(1);
+  }
+  /* 变体：仅淡入无位移 */
+  .reveal--fade {
+    transform: none;
+  }
+  /* 延迟修饰 */
+  .reveal--delayed {
+    transition-delay: 0.2s;
+  }
+
+  /* ============ 动态插图 / 图片动态效果 ============ */
+  /* Ken Burns：缓慢缩放 + 平移，适合 hero 背景图 */
+  .ken-burns {
+    animation: ken-burns 18s ease-in-out infinite alternate;
+  }
+  @keyframes ken-burns {
+    0% {
+      transform: scale(1) translate(0, 0);
+    }
+    100% {
+      transform: scale(1.12) translate(-2%, -1.5%);
+    }
+  }
+
+  /* 微浮动：卡片图片轻微上下浮动，营造呼吸感 */
+  .floaty {
+    animation: floaty 6s ease-in-out infinite;
+  }
+  @keyframes floaty {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  /* 呼吸光：CTA 按钮边框/背景缓慢呼吸 */
+  .breathe-glow {
+    animation: breathe-glow 3s ease-in-out infinite;
+  }
+  @keyframes breathe-glow {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.0), 0 0 30px 0 rgba(255, 255, 255, 0.05);
+    }
+    50% {
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15), 0 0 50px 4px rgba(255, 255, 255, 0.12);
+    }
+  }
+
+  /* 视差浮动：装饰元素缓慢漂移 */
+  .parallax-drift {
+    animation: parallax-drift 12s ease-in-out infinite alternate;
+  }
+  @keyframes parallax-drift {
+    0% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    100% {
+      transform: translate(20px, -12px) rotate(2deg);
+    }
+  }
+
+  /* SVG 描边动画：路径逐步绘出 */
+  .draw-stroke {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: draw-stroke 2.5s ease-out forwards;
+  }
+  @keyframes draw-stroke {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* 文字逐字浮现容器 */
+  .text-rise > * {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: text-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes text-rise {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 光泽扫过：卡片悬停时一道光斜扫 */
+  .shine-on-hover {
+    position: relative;
+    overflow: hidden;
+  }
+  .shine-on-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.25) 50%, transparent 70%);
+    transform: skewX(-20deg);
+    transition: left 0.8s ease;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .shine-on-hover:hover::before {
+    left: 150%;
+  }
+
+  /* 渐变流动：背景渐变缓慢移动 */
+  .gradient-flow {
+    background-size: 200% 200%;
+    animation: gradient-flow 8s ease infinite;
+  }
+  @keyframes gradient-flow {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  /* 进入视口时触发（配合 .reveal）的图片放大 */
+  .reveal.is-revealed .reveal-image {
+    animation: image-breathe-in 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes image-breathe-in {
+    from {
+      transform: scale(1.08);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+
+  /* ============ TransitionGroup FLIP 过渡 ============ */
+  .flip-list-move {
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .flip-list-enter-active {
+    transition: all 0.5s ease;
+  }
+  .flip-list-leave-active {
+    transition: all 0.4s ease;
+    position: absolute;
+  }
+  .flip-list-enter-from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  .flip-list-leave-to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}

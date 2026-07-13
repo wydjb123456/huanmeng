@@ -1,0 +1,25 @@
+{
+  "name": "幻梦 - AI 生成 PPT 与海报",
+  "short_name": "幻梦",
+  "description": "AI 驱动的 PPT 与海报生成平台，输入主题或上传文档一键生成专业演示文稿",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

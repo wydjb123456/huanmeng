@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# User uploads (runtime data)
+server/uploads/
+
+# Generated outputs (promo/demo assets)
+outputs/
+
+# Verification output
+verify/output/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+server/prisma/*.db-journal
+
+# Prisma generated client (regenerated on install)
+server/node_modules/.prisma/
+
+# Binary tools
+tools/cloudflared.exe
+
+# Temp files
+*.tmp
+*.bak
