@@ -66,6 +66,8 @@ export const adminApi = {
     request.get('/admin/users', { params: { q, page, size } }) as unknown as Promise<{ total: number; page: number; size: number; items: AdminUser[] }>,
   adjustBalance: (userId: number, delta: number, reason?: string) =>
     request.patch(`/admin/users/${userId}/balance`, { delta, reason }) as unknown as Promise<{ userId: number; newBalance: number; delta: number }>,
+  changePassword: (userId: number, newPassword: string) =>
+    request.patch(`/admin/users/${userId}/password`, { newPassword }) as unknown as Promise<{ success: boolean }>,
   userOperations: (userId: number) =>
     request.get(`/admin/users/${userId}/operations`) as unknown as Promise<AdminOperation[]>,
   listWorks: (page = 1, size = 20, userId?: number) =>

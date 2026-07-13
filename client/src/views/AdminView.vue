@@ -68,9 +68,10 @@
             <el-table-column label="注册时间" width="180">
               <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
             </el-table-column>
-            <el-table-column label="操作" width="240">
+            <el-table-column label="操作" width="320">
               <template #default="{ row }">
                 <el-button size="small" @click="openAdjustDialog(row)">调整积分</el-button>
+                <el-button size="small" @click="openChangePasswordDialog(row)">修改密码</el-button>
                 <el-button size="small" @click="viewOperations(row)">操作日志</el-button>
               </template>
             </el-table-column>
@@ -271,6 +272,21 @@
         <el-button type="primary" :loading="couponGenerating" @click="submitGenerateCoupon">生成</el-button>
       </template>
     </el-dialog>
+
+    <!-- 修改密码对话框 -->
+    <el-dialog v-model="changePasswordDialogVisible" title="修改密码" width="440px">
+      <div v-if="changePasswordTarget" class="space-y-4">
+        <div class="text-sm text-ink-600">
+          修改用户：<span class="text-ink-900 font-medium">{{ changePasswordTarget.username }}</span> 的密码
+        </div>
+        <el-input v-model="changePasswordForm.newPassword" type="password" placeholder="新密码（至少6位）" show-password />
+        <el-input v-model="changePasswordForm.confirmPassword" type="password" placeholder="确认新密码" show-password />
+      </div>
+      <template #footer>
+        <el-button @click="changePasswordDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="changingPassword" @click="submitChangePassword">确认修改</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -333,6 +349,12 @@ const operationsLoading = ref(false);
 const couponDialogVisible = ref(false);
 const couponForm = ref({ amount: 0, count: 1, expiresAt: '' });
 const couponGenerating = ref(false);
+
+// 修改密码对话框
+const changePasswordDialogVisible = ref(false);
+const changePasswordTarget = ref<AdminUser | null>(null);
+const changePasswordForm = ref({ newPassword: '', confirmPassword: '' });
+const changingPassword = ref(false);
 
 onMounted(() => {
   loadStats();
@@ -541,6 +563,32 @@ async function submitGenerateCoupon() {
     loadCouponStats();
   } finally {
     couponGenerating.value = false;
+  }
+}
+
+function openChangePasswordDialog(user: AdminUser) {
+  changePasswordTarget.value = user;
+  changePasswordForm.value = { newPassword: '', confirmPassword: '' };
+  changePasswordDialogVisible.value = true;
+}
+
+async function submitChangePassword() {
+  if (!changePasswordTarget.value) return;
+  if (!changePasswordForm.value.newPassword || changePasswordForm.value.newPassword.length < 6) {
+    ElMessage.warning('新密码至少需要6位');
+    return;
+  }
+  if (changePasswordForm.value.newPassword !== changePasswordForm.value.confirmPassword) {
+    ElMessage.warning('两次输入的密码不一致');
+    return;
+  }
+  changingPassword.value = true;
+  try {
+    await adminApi.changePassword(changePasswordTarget.value.id, changePasswordForm.value.newPassword);
+    ElMessage.success('密码修改成功');
+    changePasswordDialogVisible.value = false;
+  } finally {
+    changingPassword.value = false;
   }
 }
 

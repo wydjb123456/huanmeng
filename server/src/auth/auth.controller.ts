@@ -2,7 +2,7 @@ import { Controller, Post, Get, Body, UseGuards, Request, Ip } from '@nestjs/com
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { RegisterDto, LoginDto, SendCodeDto } from './dto';
+import { RegisterDto, LoginDto, SendCodeDto, ChangePasswordDto } from './dto';
 
 @Controller('auth')
 export class AuthController {
@@ -28,5 +28,11 @@ export class AuthController {
   @Get('me')
   me(@Request() req: any) {
     return this.auth.getUserById(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
+    return this.auth.changePassword(req.user.userId, dto);
   }
 }

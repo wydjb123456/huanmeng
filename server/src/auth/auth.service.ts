@@ -5,7 +5,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '@prisma/client';
 import { MailService } from './mail.service';
-import { RegisterDto, LoginDto, SendCodeDto } from './dto';
+import { RegisterDto, LoginDto, SendCodeDto, ChangePasswordDto } from './dto';
 
 const CODE_EXPIRY_MS = 5 * 60 * 1000; // 5 分钟
 const CODE_RESEND_MS = 60 * 1000; // 60 秒
@@ -157,6 +157,26 @@ export class AuthService {
       return { ...user, balance: 999999 };
     }
     return user;
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('用户不存在');
+
+    const valid = await bcrypt.compare(dto.oldPassword, user.password);
+    if (!valid) throw new UnauthorizedException('原密码错误');
+
+    if (dto.oldPassword === dto.newPassword) {
+      throw new BadRequestException('新密码不能与原密码相同');
+    }
+
+    const hashed = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashed },
+    });
+
+    return { success: true };
   }
 
   private issueToken(id: number, username: string, balance: number, role: Role) {

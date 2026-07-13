@@ -1,8 +1,9 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CouponsService } from '../coupons/coupons.service';
 import { CouponStatus } from '@prisma/client';
-import { AdjustBalanceDto, GenerateCouponDto, BatchCouponDto } from './dto';
+import { AdjustBalanceDto, GenerateCouponDto, BatchCouponDto, ChangeUserPasswordDto } from './dto';
 
 @Injectable()
 export class AdminService {
@@ -97,6 +98,19 @@ export class AdminService {
     ]);
 
     return { userId: targetUserId, newBalance, delta: dto.delta };
+  }
+
+  async changeUserPassword(targetUserId: number, dto: ChangeUserPasswordDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!user) throw new NotFoundException('用户不存在');
+
+    const hashed = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { password: hashed },
+    });
+
+    return { success: true };
   }
 
   async getUserOperations(targetUserId: number) {

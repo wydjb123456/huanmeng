@@ -5,7 +5,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
 import { AdminService } from './admin.service';
-import { AdjustBalanceDto, GenerateCouponDto, BatchCouponDto } from './dto';
+import { AdjustBalanceDto, GenerateCouponDto, BatchCouponDto, ChangeUserPasswordDto } from './dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -34,6 +34,14 @@ export class AdminController {
     @Body() dto: AdjustBalanceDto,
   ) {
     return this.admin.adjustBalance(req.user.userId, id, dto);
+  }
+
+  @Patch('users/:id/password')
+  changeUserPassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ChangeUserPasswordDto,
+  ) {
+    return this.admin.changeUserPassword(id, dto);
   }
 
   @Get('users/:id/operations')

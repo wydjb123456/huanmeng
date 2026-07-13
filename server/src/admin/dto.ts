@@ -1,4 +1,4 @@
-import { IsInt, IsString, IsOptional, Min, IsArray } from 'class-validator';
+import { IsInt, IsString, IsOptional, Min, IsArray, MinLength } from 'class-validator';
 
 export class AdjustBalanceDto {
   @IsInt()
@@ -26,4 +26,10 @@ export class BatchCouponDto {
 
   @IsString()
   action: 'disable' | 'enable';
+}
+
+export class ChangeUserPasswordDto {
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
 }
