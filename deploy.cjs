@@ -22,6 +22,7 @@ const ssh = new NodeSSH();
       cd server
       npm install
       npx prisma generate
+      npx prisma db push --accept-data-loss
       npm run build
       pm2 restart huanmeng-api || pm2 start dist/main.js --name huanmeng-api
       pm2 delete huanmeng || true
