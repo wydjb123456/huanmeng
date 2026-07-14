@@ -9,11 +9,11 @@ export class RewardsController {
 
   @Get('status')
   async getStatus(@Request() req: any) {
-    return this.rewardsService.getStatus(req.user.id);
+    return this.rewardsService.getStatus(req.user.userId);
   }
 
   @Post('check-in')
   async checkIn(@Request() req: any) {
-    return this.rewardsService.checkIn(req.user.id);
+    return this.rewardsService.checkIn(req.user.userId);
   }
 }

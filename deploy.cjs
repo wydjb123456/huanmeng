@@ -23,7 +23,8 @@ const ssh = new NodeSSH();
       npm install
       npx prisma generate
       npm run build
-      pm2 restart huanmeng || pm2 start dist/main.js --name huanmeng
+      pm2 restart huanmeng-api || pm2 start dist/main.js --name huanmeng-api
+      pm2 delete huanmeng || true
       cd ../client
       npm install
       npm run build
