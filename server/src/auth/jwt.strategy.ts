@@ -13,6 +13,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: any) {
-    return { userId: payload.sub, username: payload.username, role: payload.role };
+    // 兼容旧版 token 可能使用 payload.id 而非 payload.sub 的情况
+    return { userId: payload.sub || payload.id, username: payload.username, role: payload.role };
   }
 }

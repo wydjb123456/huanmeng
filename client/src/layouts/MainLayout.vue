@@ -165,6 +165,9 @@
     <!-- 每日福利窗口 -->
     <RewardsDialog v-model="rewardsVisible" />
 
+    <!-- 全局公告弹窗 -->
+    <AnnouncementModal />
+
     <!-- 页脚：编辑式极简 -->
     <footer class="border-t border-ink-200 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -196,6 +199,7 @@ import { useUserStore } from '@/stores/user';
 import { useWorksStore } from '@/stores/works';
 import PricingDialog from '@/components/PricingDialog.vue';
 import RewardsDialog from '@/components/RewardsDialog.vue';
+import AnnouncementModal from '@/components/AnnouncementModal.vue';
 
 const userStore = useUserStore();
 const worksStore = useWorksStore();

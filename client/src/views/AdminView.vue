@@ -224,6 +224,9 @@
           </el-table>
         </div>
       </el-tab-pane>
+      <el-tab-pane label="公告管理" name="announcements">
+        <AnnouncementManagement />
+      </el-tab-pane>
     </el-tabs>
 
     <!-- 调整积分对话框 -->
@@ -294,6 +297,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { adminApi, type AdminStats, type AdminUser, type AdminWork, type AdminCoupon, type AdminOperation, type CouponStats } from '@/api/admin';
+import AnnouncementManagement from './AnnouncementManagement.vue';
 
 const activeTab = ref('stats');
 

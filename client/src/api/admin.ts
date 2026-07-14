@@ -84,4 +84,11 @@ export const adminApi = {
     request.get('/admin/coupons/stats') as unknown as Promise<CouponStats>,
   exportCoupons: () =>
     request.get('/admin/coupons/export', { responseType: 'blob' }) as unknown as Promise<Blob>,
+    
+  // Announcements
+  getAnnouncements: () => request.get('/announcements/admin') as unknown as Promise<any[]>,
+  createAnnouncement: (data: { title: string; content: string; isActive?: boolean }) => request.post('/announcements/admin', data),
+  updateAnnouncement: (id: number, data: { title?: string; content?: string; isActive?: boolean }) => request.put(`/announcements/admin/${id}`, data),
+  deleteAnnouncement: (id: number) => request.delete(`/announcements/admin/${id}`),
+  getActiveAnnouncement: () => request.get('/announcements/active') as unknown as Promise<any>,
 };

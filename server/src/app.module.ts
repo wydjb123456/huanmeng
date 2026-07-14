@@ -9,6 +9,7 @@ import { TemplatesModule } from './templates/templates.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { AdminModule } from './admin/admin.module';
 import { RewardsModule } from './rewards/rewards.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RewardsModule } from './rewards/rewards.module';
     CouponsModule,
     AdminModule,
     RewardsModule,
+    AnnouncementsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
