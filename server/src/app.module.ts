@@ -8,6 +8,7 @@ import { WorksModule } from './works/works.module';
 import { TemplatesModule } from './templates/templates.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { AdminModule } from './admin/admin.module';
+import { RewardsModule } from './rewards/rewards.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AdminModule } from './admin/admin.module';
     TemplatesModule,
     CouponsModule,
     AdminModule,
+    RewardsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

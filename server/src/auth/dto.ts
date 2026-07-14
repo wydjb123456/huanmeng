@@ -22,6 +22,10 @@ export class RegisterDto {
   @MinLength(6)
   @MaxLength(6)
   code: string;
+
+  @IsString()
+  @MaxLength(20)
+  inviteCode?: string;
 }
 
 export class LoginDto {

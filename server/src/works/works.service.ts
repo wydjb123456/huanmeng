@@ -556,7 +556,7 @@ CRITICAL design requirements:
         slides.map(async (slide) => {
           const slidePrompt = dto.pdfImport
             ? this.buildPdfSlidePrompt(slide, dto)
-            : this.buildSlidePrompt(slide.title, slide.content, dto.style, dto.customStyle, dto.language, dto.detailLevel, dto.styleTag);
+            : this.buildSlidePrompt(slide.title, slide.content, dto.style, dto.customStyle, dto.language, dto.detailLevel, dto.styleTag, slide.idx, slides.length);
           const imageUrls = slide.referenceImage
             ? [toPublicUrl(slide.referenceImage, this.config)]
             : undefined;
@@ -751,8 +751,9 @@ CRITICAL design requirements:
     try {
       const slide = await this.prisma.slide.findUnique({ where: { id: slideId } });
       if (!slide) return;
+      const totalSlides = await this.prisma.slide.count({ where: { workId } });
 
-      const slidePrompt = this.buildSlidePrompt(slide.title, slide.content, work.style, undefined, work.language, work.detailLevel, work.styleTag ?? undefined);
+      const slidePrompt = this.buildSlidePrompt(slide.title, slide.content, work.style, undefined, work.language, work.detailLevel, work.styleTag ?? undefined, slide.idx, totalSlides);
       const imageUrls = slide.referenceImage
         ? [toPublicUrl(slide.referenceImage, this.config)]
         : undefined;
@@ -902,8 +903,23 @@ CRITICAL design requirements:
   private buildGridPrompt(topic: string, style: string, customStyle: string | undefined, slides: any[], styleTag?: string): string {
     const styleDesc = this.styleDesc(style, customStyle);
     const iscsVisual = this.styleEngine.buildVisualPrompt(styleTag);
+    const layouts = [
+      'Split layout (Left Image, Right Text)',
+      'Split layout (Left Text, Right Image)',
+      'Top-Bottom layout',
+      'Asymmetric/Creative layout',
+      'Grid/Cards layout',
+      'Full background with text box'
+    ];
+    
     const slideList = slides
-      .map((s, i) => `- Panel ${i + 1}: ${s.title}${s.content ? ' (' + s.content.replace(/\n/g, ', ') + ')' : ''}`)
+      .map((s, i) => {
+        let typeInfo = 'Body slide';
+        if (i === 0) typeInfo = 'Cover slide, large title, hero visual';
+        else if (i === slides.length - 1 && slides.length > 1) typeInfo = 'Ending slide, minimalist, concluding message';
+        else typeInfo = `Body slide, layout: ${layouts[i % layouts.length]}`;
+        return `- Panel ${i + 1} (${typeInfo}): ${s.title}${s.content ? ' (' + s.content.replace(/\n/g, ', ') + ')' : ''}`;
+      })
       .join('\n');
 
     return `Generate a single 16:9 widescreen landscape image divided into a 3x3 grid (3 rows, 3 columns, 9 panels total). Each panel is itself in 16:9 landscape orientation. Thin white dividing lines separate the panels.
@@ -911,27 +927,56 @@ CRITICAL design requirements:
 Topic: ${topic}
 Style: ${styleDesc}
 ${iscsVisual ? `\nInternational Cultural Design DNA:\n${iscsVisual}\n` : ''}
-Slide content (one per panel, in reading order):
+Slide content and layout instructions (one per panel, in reading order):
 ${slideList}
 
-CRITICAL: This is ONE 16:9 image containing 9 panels arranged in a 3x3 grid. Each panel is a complete slide with title and content. Professional typography, consistent design across all panels. Readable text in each panel.`;
+CRITICAL: This is ONE 16:9 image containing 9 panels arranged in a 3x3 grid. Each panel is a complete slide with title and content. Professional typography, consistent design across all panels. VARY THE LAYOUT of the body panels so they don't look identical. Ensure the first panel looks like a cover slide and the last panel looks like an ending slide. Readable text in each panel.`;
   }
 
   /** 精细模式：单页 prompt */
-  private buildSlidePrompt(title: string, content: string, style: string, customStyle: string | undefined, language?: string, detailLevel?: string, styleTag?: string): string {
+  private buildSlidePrompt(title: string, content: string, style: string, customStyle: string | undefined, language?: string, detailLevel?: string, styleTag?: string, idx: number = 0, totalSlides: number = 1): string {
     const styleDesc = this.styleDesc(style, customStyle);
     const iscsVisual = this.styleEngine.buildVisualPrompt(styleTag);
     const langHint = language === 'en' ? 'English' : language === 'bilingual' ? 'Chinese title with English subtitle, Chinese content' : 'Simplified Chinese';
     const detailHint = detailLevel === 'brief' ? 'minimal text, focus on visuals' : detailLevel === 'detailed' ? 'richer text content, include data and details' : 'balanced text and visuals';
+    
+    let slideType = 'Body Slide';
+    let layoutHint = '';
+
+    if (idx === 0) {
+      slideType = 'Cover Slide (封面)';
+      layoutHint = 'Design this as an impressive COVER SLIDE. The title should be massive and centered or boldly aligned. Use a striking background or hero image. Do not use bullet points layout.';
+    } else if (idx === totalSlides - 1 && totalSlides > 1) {
+      slideType = 'Ending/Thank You Slide (结尾页)';
+      layoutHint = 'Design this as the ENDING SLIDE. Typically contains a warm "Thank You", contact info, or a concluding thought. Minimalist layout with a strong central focus. Do not use standard content layout.';
+    } else {
+      slideType = 'Body Slide (正文页)';
+      const layouts = [
+        'Split layout: Image on the left, text on the right.',
+        'Split layout: Text on the left, image on the right.',
+        'Top-bottom layout: Title at the top, content evenly distributed below in columns.',
+        'Creative layout: Asymmetric design with overlapping shapes and text boxes.',
+        'Grid layout: Content arranged in a structured grid or cards.',
+        'Full background layout: High quality background image with a semi-transparent dark or light overlay box containing the text.'
+      ];
+      const selectedLayout = layouts[idx % layouts.length];
+      layoutHint = `Design this as a BODY SLIDE. Use the following specific layout: ${selectedLayout} Ensure it is visually distinct from standard bullet-point slides.`;
+    }
+
     return `Generate a single 16:9 widescreen presentation slide.
 
+Slide Type: ${slideType}
 Slide title: ${title}
 Content points: ${content || 'N/A'}
 Text language: ${langHint}
 Detail level: ${detailHint}
 Style: ${styleDesc}
 ${iscsVisual ? `\nInternational Cultural Design DNA:\n${iscsVisual}\n` : ''}
-This is ONE complete slide with the title prominently displayed and content points listed below. Professional typography, clean layout, readable text. 16:9 landscape orientation.`;
+
+Layout & Design Instructions:
+${layoutHint}
+
+CRITICAL: This is ONE complete slide. Professional typography, clean layout, readable text. 16:9 landscape orientation. Avoid making every slide look identical.`;
   }
 
   /** PDF 导入：图生图专用 prompt，基于参考图重新设计视觉风格 */

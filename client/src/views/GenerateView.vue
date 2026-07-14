@@ -710,6 +710,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, onUnmounted, watch, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useWorksStore } from '@/stores/works';
 import { ElMessage, ElMessageBox } from 'element-plus';
@@ -719,6 +720,7 @@ import { getStyles, type StyleVariantSummary } from '@/api/iscs';
 import PromptLibrary from '@/components/PromptLibrary.vue';
 import StyleReverseButton from '@/components/StyleReverseButton.vue';
 
+const route = useRoute();
 const userStore = useUserStore();
 const worksStore = useWorksStore();
 
@@ -726,6 +728,23 @@ const worksStore = useWorksStore();
 const iscsStyles = ref<StyleVariantSummary[]>([]);
 const iscsStyleMap = ref<Record<string, StyleVariantSummary>>({});
 onMounted(async () => {
+  // 解析路由参数(来自模板画廊)
+  if (route.query.prompt) {
+    form.prompt = route.query.prompt as string;
+  }
+  if (route.query.category) {
+    const validCats = categories.map(c => c.value);
+    if (validCats.includes(route.query.category as string)) {
+      form.category = route.query.category as string;
+    }
+  }
+  if (route.query.style) {
+    const validStyles = styles.map(s => s.value);
+    if (validStyles.includes(route.query.style as string)) {
+      form.style = route.query.style as string;
+    }
+  }
+
   // 恢复进行中的 PPT 生成任务
   const aw = worksStore.activeWork;
   if (aw && aw.type === 'ppt') {

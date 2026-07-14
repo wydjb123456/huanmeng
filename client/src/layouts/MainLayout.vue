@@ -42,6 +42,16 @@
                 <span class="text-xs text-primary-700 font-medium">{{ worksStore.activeWork?.type === 'poster' ? '海报' : 'PPT' }} {{ worksStore.activeWork?.progress }}%</span>
               </div>
 
+              <!-- 签到与邀请福利 -->
+              <button
+                class="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-ink-200 rounded-sm hover:border-ink-900 hover:bg-ink-50 transition-all text-ink-600 hover:text-ink-900"
+                @click="rewardsVisible = true"
+                title="签到与邀请奖励"
+              >
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                <span class="text-sm tracking-wide">福利</span>
+              </button>
+
               <!-- 收费 & 积分 二合一入口 -->
               <button
                 class="hidden sm:flex items-center gap-2 px-3 py-1.5 border border-ink-200 rounded-sm hover:border-ink-900 hover:bg-ink-50 transition-all group"
@@ -66,6 +76,10 @@
                 </button>
                 <template #dropdown>
                   <el-dropdown-menu>
+                    <el-dropdown-item @click="rewardsVisible = true">
+                      <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                      每日福利
+                    </el-dropdown-item>
                     <el-dropdown-item @click="pricingVisible = true">
                       <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                       收费 & 兑换积分
@@ -120,6 +134,13 @@
             </router-link>
             <button
               class="block py-2 text-sm text-ink-700 hover:text-ink-900 w-full text-left"
+              @click="mobileMenuOpen = false; rewardsVisible = true"
+              v-if="userStore.isLoggedIn"
+            >
+              每日福利
+            </button>
+            <button
+              class="block py-2 text-sm text-ink-700 hover:text-ink-900 w-full text-left"
               @click="mobileMenuOpen = false; pricingVisible = true"
             >
               收费 & 兑换积分
@@ -140,6 +161,9 @@
 
     <!-- 收费标准窗口（含余额展示 + 兑换码） -->
     <PricingDialog v-model="pricingVisible" />
+
+    <!-- 每日福利窗口 -->
+    <RewardsDialog v-model="rewardsVisible" />
 
     <!-- 页脚：编辑式极简 -->
     <footer class="border-t border-ink-200 bg-white">
@@ -171,6 +195,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { useWorksStore } from '@/stores/works';
 import PricingDialog from '@/components/PricingDialog.vue';
+import RewardsDialog from '@/components/RewardsDialog.vue';
 
 const userStore = useUserStore();
 const worksStore = useWorksStore();
@@ -179,6 +204,8 @@ const mobileMenuOpen = ref(false);
 
 // 收费标准 & 兑换积分 二合一窗口
 const pricingVisible = ref(false);
+// 每日福利窗口
+const rewardsVisible = ref(false);
 
 function goToActiveWork() {
   const aw = worksStore.activeWork;

@@ -194,6 +194,17 @@
               </div>
             </div>
 
+            <!-- 邀请码（选填，仅注册模式） -->
+            <div v-if="!isLogin">
+              <label class="block text-sm font-medium text-ink-700 mb-2">邀请码 <span class="text-ink-400 font-normal text-xs ml-1">(选填)</span></label>
+              <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-400" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 4v16m8-8H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <input v-model="form.inviteCode" type="text" class="input-base pl-10" placeholder="填写邀请码可额外获赠 20 积分" />
+              </div>
+            </div>
+
             <button type="submit" class="w-full py-3.5 bg-ink-900 text-white text-sm tracking-[0.2em] uppercase hover:bg-ink-800 transition-colors disabled:opacity-30 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2" :disabled="loading">
               <svg v-if="loading" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="60" stroke-dashoffset="20"/></svg>
               <span>{{ isLogin ? '登录' : '注册' }}</span>
@@ -236,7 +247,7 @@ const codeCountdown = ref(0);
 let codeTimer: ReturnType<typeof setInterval> | null = null;
 
 const isLogin = computed(() => route.name === 'login');
-const form = reactive({ username: '', password: '', email: '', code: '' });
+const form = reactive({ username: '', password: '', email: '', code: '', inviteCode: '' });
 
 const artworks = [
   { src: '/images/anime-landscape.webp', title: '田园牧歌', style: 'Pastoral Anime' },
@@ -335,6 +346,7 @@ async function handleSubmit() {
         password: form.password,
         email: form.email,
         code: form.code,
+        inviteCode: form.inviteCode || undefined,
       });
       ElMessage.success('注册成功，请登录');
       router.push('/login');

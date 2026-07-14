@@ -14,11 +14,17 @@ model User {
   password  String
   balance   Int      @default(0)
   role      Role     @default(USER)
+  inviteCode String? @unique
+  invitedById Int?
+  invitedBy   User?  @relation("UserInvites", fields: [invitedById], references: [id])
+  invitees    User[] @relation("UserInvites")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  works   Work[]
-  coupons Coupon[] @relation("CouponUsage")
+  works        Work[]
+  coupons      Coupon[]       @relation("CouponUsage")
+  checkIns     DailyCheckIn[]
+  pointHistory PointHistory[]
 }
 
 enum Role {
@@ -148,9 +154,34 @@ model Template {
   category    String
   thumbnail   String
   promptTemplate String
+  type        String   @default("ppt") // 'ppt' | 'poster'
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([isActive])
+}
+
+model DailyCheckIn {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateString String  // 格式如 "2026-07-14"，用于唯一约束
+  points    Int      // 本次签到获得的积分
+  createdAt DateTime @default(now())
+
+  @@unique([userId, dateString])
+  @@index([userId])
+}
+
+model PointHistory {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int      // 正数表示增加，负数表示扣除
+  reason      String   // 例如：check_in, invite_reward, invitee_reward, consume
+  description String?  // 具体描述
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
 }

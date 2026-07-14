@@ -79,6 +79,12 @@
             <svg class="w-12 h-12 text-primary-300" viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4z M4 9h16" stroke="currentColor" stroke-width="2"/></svg>
           </div>
 
+          <!-- 类型徽章 -->
+          <div class="absolute top-5 right-5 z-10">
+            <span v-if="t.type === 'poster'" class="px-2.5 py-1 bg-white/20 backdrop-blur border border-white/30 text-[10px] text-white tracking-[0.2em] uppercase">POSTER</span>
+            <span v-else class="px-2.5 py-1 bg-ink-900/40 backdrop-blur border border-ink-900/30 text-[10px] text-white tracking-[0.2em] uppercase">PPT</span>
+          </div>
+
           <!-- 编号水印 -->
           <div class="absolute top-5 left-5 editorial-number text-white/80 text-sm">
             Nº {{ String(i + 1).padStart(2, '0') }}
@@ -125,8 +131,16 @@ const filteredTemplates = computed(() => {
 });
 
 function useTemplate(t: any) {
-  ElMessage.info(`模板"${t.name}"即将支持，当前请使用 AI 生成`);
-  router.push('/generate');
+  const targetPath = t.type === 'poster' ? '/poster' : '/generate';
+  router.push({
+    path: targetPath,
+    query: {
+      prompt: t.promptTemplate,
+      category: t.category,
+      style: 'none',
+      reference: t.thumbnail
+    }
+  });
 }
 
 onMounted(async () => {

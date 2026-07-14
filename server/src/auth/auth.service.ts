@@ -116,19 +116,64 @@ export class AuthService {
 
     // 7. 验证通过 → 标记消费 + 创建用户（事务）
     const hashed = await bcrypt.hash(dto.password, 10);
+    // 生成用户的邀请码（8位随机字符）
+    const userInviteCode = crypto.randomBytes(4).toString('hex');
+
     const user = await this.prisma.$transaction(async (tx) => {
       await tx.emailVerificationCode.update({
         where: { id: codeRecord.id },
         data: { consumed: true },
       });
-      return tx.user.create({
+
+      // 处理邀请逻辑
+      let invitedById: number | null = null;
+      let initialBalance = 50; // 注册默认送 50
+
+      if (dto.inviteCode) {
+        const inviter = await tx.user.findUnique({ where: { inviteCode: dto.inviteCode } });
+        if (inviter) {
+          invitedById = inviter.id;
+          initialBalance += 20; // 填写邀请码额外送 20 积分
+          
+          // 给邀请人发放奖励
+          await tx.user.update({
+            where: { id: inviter.id },
+            data: { balance: { increment: 50 } }
+          });
+          
+          await tx.pointHistory.create({
+            data: {
+              userId: inviter.id,
+              amount: 50,
+              reason: 'invite_reward',
+              description: `邀请新用户 ${dto.username} 奖励`
+            }
+          });
+        }
+      }
+
+      const newUser = await tx.user.create({
         data: {
           username: dto.username,
           email: dto.email,
           password: hashed,
-          balance: 50, // 注册送 50 积分
+          balance: initialBalance,
+          inviteCode: userInviteCode,
+          invitedById,
         },
       });
+
+      // 记录新用户的初始积分
+      await tx.pointHistory.create({
+        data: {
+          userId: newUser.id,
+          amount: initialBalance,
+          reason: 'register_reward',
+          description: invitedById ? '注册并填写邀请码奖励' : '注册奖励'
+        }
+      });
+
+      return newUser;
     });
 
     return this.issueToken(user.id, user.username, user.balance, user.role);
