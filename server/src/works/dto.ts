@@ -34,7 +34,7 @@ export class GenerateWorkDto {
   @IsOptional() @IsIn(['brief', 'standard', 'detailed'])
   detailLevel?: string;
 
-  @IsOptional() @IsIn(['16:9', '4:3', '16:10', '9:16'])
+  @IsOptional() @IsIn(['16:9', '4:3', '16:10', '9:16', '9:21'])
   aspectRatio?: string;
 
   @IsOptional() @IsBoolean()

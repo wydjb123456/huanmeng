@@ -17,7 +17,7 @@ export class GeneratePosterDto {
   @IsOptional() @IsString()
   customCategory?: string;  // 当 category === 'custom' 时使用
 
-  @IsIn(['9:16', '1:1', '2:3', '3:4', '4:5', '16:9', '21:9', '3:2'])
+  @IsIn(['9:16', '9:21', '1:1', '2:3', '3:4', '4:5', '16:9', '21:9', '3:2'])
   aspectRatio: string;
 
   @IsOptional() @IsIn(['zh', 'en', 'bilingual'])

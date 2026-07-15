@@ -497,6 +497,7 @@ const styles = [
 
 const aspectRatios = [
   { value: '9:16', label: '9:16 竖版', desc: '社媒故事/手机' },
+  { value: '9:21', label: '9:21 竖版', desc: '全屏故事/长图' },
   { value: '1:1', label: '1:1 方版', desc: 'Instagram' },
   { value: '4:5', label: '4:5 竖版', desc: 'Instagram 竖图' },
   { value: '16:9', label: '16:9 横版', desc: '横幅/视频封面' },

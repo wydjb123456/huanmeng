@@ -366,6 +366,7 @@ CRITICAL design requirements:
   private ratioHint(ratio: string): string {
     const map: Record<string, string> = {
       '9:16': 'Vertical portrait orientation (taller than wide) — for mobile screens, stories, digital signage',
+      '9:21': 'Extra-tall vertical portrait (9:21) — for full-screen stories, long-form visuals, tall digital displays',
       '1:1': 'Square format — for Instagram feed, social media',
       '2:3': 'A4 portrait proportion — for printed posters',
       '3:4': 'Portrait format — for presentations and digital displays',

@@ -857,6 +857,7 @@ const aspectRatios = [
   { value: '16:9', label: '16:9' },
   { value: '4:3', label: '4:3' },
   { value: '9:16', label: '9:16' },
+  { value: '9:21', label: '9:21' },
 ];
 
 const languages = [
