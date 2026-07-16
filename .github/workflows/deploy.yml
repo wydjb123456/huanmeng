@@ -20,6 +20,8 @@ jobs:
           script: |
             cd /www/huanmeng
             git pull origin main
-            cd server
+            cd client
+            npm run build
+            cd ../server
             npm run build
             pm2 restart huanmeng

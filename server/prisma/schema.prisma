@@ -44,7 +44,7 @@ model Work {
   category    String   @default("business")  // business/academic/product/education/marketing/personal
   language    String   @default("zh")  // zh/en/bilingual
   detailLevel String   @default("standard")  // brief/standard/detailed
-  aspectRatio String   @default("16:9")  // 16:9/4:3/9:16/1:1/2:3/3:4
+  aspectRatio String   @default("16:9")  // 16:9/4:3/9:16/9:21/1:1/2:3/3:4
   pageCount   Int      @default(9)
   taskId      String?
   status      WorkStatus @default(pending)

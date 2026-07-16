@@ -159,8 +159,8 @@
                 :class="form.aspectRatio === a.value ? 'border-ink-900 bg-ink-900 text-white' : 'border-ink-200 hover:border-ink-400 text-ink-700'"
                 @click="form.aspectRatio = a.value"
               >
-                <div class="flex items-center justify-center mb-1">
-                  <div class="border-2 w-4 h-4"
+                <div class="flex items-center justify-center mb-2 h-6">
+                  <div class="border-2"
                        :class="form.aspectRatio === a.value ? 'border-white' : 'border-ink-400'"
                        :style="ratioPreviewStyle(a.value)"></div>
                 </div>
@@ -553,9 +553,9 @@ const workId = ref<number | null>(null);
 
 function ratioPreviewStyle(ratio: string) {
   const [w, h] = ratio.split(':').map(Number);
-  const scale = 5 / Math.max(w, h);
-  const sw = Math.max(4, Math.floor(w * scale));
-  const sh = Math.max(4, Math.floor(h * scale));
+  const scale = 20 / Math.max(w, h);
+  const sw = Math.max(6, Math.floor(w * scale));
+  const sh = Math.max(6, Math.floor(h * scale));
   return { width: sw + 'px', height: sh + 'px' };
 }
 
