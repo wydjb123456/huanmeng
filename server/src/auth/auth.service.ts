@@ -66,23 +66,18 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    // 1. 检查用户名是否已存在
-    const exists = await this.prisma.user.findUnique({ where: { username: dto.username } });
-    if (exists) throw new ConflictException('用户名已存在');
-
-    // 2. 检查 email 是否已注册
-    const emailExists = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (emailExists) throw new ConflictException('该邮箱已被注册');
-
-    // 3. 查该 email 最近一条未消费的 code
+    // 查该 email 最近一条未消费的 code
     const codeRecord = await this.prisma.emailVerificationCode.findFirst({
       where: { email: dto.email, consumed: false },
       orderBy: { createdAt: 'desc' },
     });
-    if (!codeRecord) throw new BadRequestException('请先获取验证码');
+    if (!codeRecord) {
+      throw new BadRequestException('请先获取验证码');
+    }
 
-    // 4. 5 分钟过期检查
-    if (codeRecord.expiresAt.getTime() < Date.now()) {
+    // 5 分钟过期检查
+    const isCodeExpired = codeRecord.expiresAt.getTime() < Date.now();
+    if (isCodeExpired) {
       await this.prisma.emailVerificationCode.update({
         where: { id: codeRecord.id },
         data: { consumed: true },
@@ -90,7 +85,7 @@ export class AuthService {
       throw new BadRequestException('验证码已过期，请重新获取');
     }
 
-    // 5. 5 次错误检查
+    // 5 次错误检查
     if (codeRecord.attempts >= MAX_ATTEMPTS) {
       await this.prisma.emailVerificationCode.update({
         where: { id: codeRecord.id },
@@ -99,7 +94,7 @@ export class AuthService {
       throw new BadRequestException('错误次数过多，请重新获取验证码');
     }
 
-    // 6. 验证 code
+    // 验证 code
     const codeValid = await bcrypt.compare(dto.code, codeRecord.codeHash);
     if (!codeValid) {
       const newAttempts = codeRecord.attempts + 1;
@@ -114,12 +109,22 @@ export class AuthService {
       throw new BadRequestException(`验证码错误${remaining > 0 ? `，剩余 ${remaining} 次机会` : '，请重新获取'}`);
     }
 
-    // 7. 验证通过 → 标记消费 + 创建用户（事务）
+    // 验证通过 → 标记消费 + 创建用户（事务）
     const hashed = await bcrypt.hash(dto.password, 10);
     // 生成用户的邀请码（8位随机字符）
     const userInviteCode = crypto.randomBytes(4).toString('hex');
 
     const user = await this.prisma.$transaction(async (tx) => {
+      // 1. 检查用户名和邮箱是否已存在 (原子操作)
+      const usernameExists = await tx.user.findUnique({ where: { username: dto.username } });
+      if (usernameExists) {
+        throw new ConflictException('用户名已存在');
+      }
+      const emailExists = await tx.user.findUnique({ where: { email: dto.email } });
+      if (emailExists) {
+        throw new ConflictException('该邮箱已被注册');
+      }
+
       await tx.emailVerificationCode.update({
         where: { id: codeRecord.id },
         data: { consumed: true },
@@ -134,13 +139,13 @@ export class AuthService {
         if (inviter) {
           invitedById = inviter.id;
           initialBalance += 20; // 填写邀请码额外送 20 积分
-          
+
           // 给邀请人发放奖励
           await tx.user.update({
             where: { id: inviter.id },
             data: { balance: { increment: 50 } }
           });
-          
+
           await tx.pointHistory.create({
             data: {
               userId: inviter.id,

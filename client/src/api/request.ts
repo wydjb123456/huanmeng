@@ -21,7 +21,10 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    const message = error.response?.data?.message || '网络错误，请稍后重试';
+    let message = error.response?.data?.message || '网络错误，请稍后重试';
+    if (Array.isArray(message)) {
+      message = message.join('；');
+    }
     if (error.response?.status === 401) {
       const userStore = useUserStore();
       userStore.logout();
