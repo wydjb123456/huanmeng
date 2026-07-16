@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, BadRequestException, ValidationError } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as path from 'node:path';
@@ -29,8 +29,21 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      exceptionFactory: (validationErrors: ValidationError[] = []) => {
+        Logger.error('Validation errors:', JSON.stringify(validationErrors, null, 2), 'ValidationPipe');
+        return new BadRequestException(validationErrors);
+      },
     })
   );
+
+  // 全局异常过滤器，用于记录所有未捕获的异常
+  app.use((err: any, req: any, res: any, next: any) => {
+    Logger.error('Uncaught exception:', err.stack, 'GlobalExceptionHandler');
+    if (err.response) {
+      Logger.error('Error response:', JSON.stringify(err.response, null, 2), 'GlobalExceptionHandler');
+    }
+    next(err);
+  });
 
   // 静态文件服务：/uploads/* 映射到本地 uploads 目录
   const uploadDir = path.resolve(config.get<string>('UPLOAD_DIR', './uploads'));

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException, BadRequestException, HttpException, HttpStatus, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException, HttpException, HttpStatus, ServiceUnavailableException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
@@ -66,122 +66,148 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    // 查该 email 最近一条未消费的 code
-    const codeRecord = await this.prisma.emailVerificationCode.findFirst({
-      where: { email: dto.email, consumed: false },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (!codeRecord) {
-      throw new BadRequestException('请先获取验证码');
-    }
-
-    // 5 分钟过期检查
-    const isCodeExpired = codeRecord.expiresAt.getTime() < Date.now();
-    if (isCodeExpired) {
-      await this.prisma.emailVerificationCode.update({
-        where: { id: codeRecord.id },
-        data: { consumed: true },
+    try {
+      // 查该 email 最近一条未消费的 code
+      const codeRecord = await this.prisma.emailVerificationCode.findFirst({
+        where: { email: dto.email, consumed: false },
+        orderBy: { createdAt: 'desc' },
       });
-      throw new BadRequestException('验证码已过期，请重新获取');
-    }
-
-    // 5 次错误检查
-    if (codeRecord.attempts >= MAX_ATTEMPTS) {
-      await this.prisma.emailVerificationCode.update({
-        where: { id: codeRecord.id },
-        data: { consumed: true },
-      });
-      throw new BadRequestException('错误次数过多，请重新获取验证码');
-    }
-
-    // 验证 code
-    const codeValid = await bcrypt.compare(dto.code, codeRecord.codeHash);
-    if (!codeValid) {
-      const newAttempts = codeRecord.attempts + 1;
-      await this.prisma.emailVerificationCode.update({
-        where: { id: codeRecord.id },
-        data: {
-          attempts: newAttempts,
-          consumed: newAttempts >= MAX_ATTEMPTS,
-        },
-      });
-      const remaining = MAX_ATTEMPTS - newAttempts;
-      throw new BadRequestException(`验证码错误${remaining > 0 ? `，剩余 ${remaining} 次机会` : '，请重新获取'}`);
-    }
-
-    // 验证通过 → 标记消费 + 创建用户（事务）
-    const hashed = await bcrypt.hash(dto.password, 10);
-    // 生成用户的邀请码（8位随机字符）
-    const userInviteCode = crypto.randomBytes(4).toString('hex');
-
-    const user = await this.prisma.$transaction(async (tx) => {
-      // 1. 检查用户名和邮箱是否已存在 (原子操作)
-      const usernameExists = await tx.user.findUnique({ where: { username: dto.username } });
-      if (usernameExists) {
-        throw new ConflictException('用户名已存在');
-      }
-      const emailExists = await tx.user.findUnique({ where: { email: dto.email } });
-      if (emailExists) {
-        throw new ConflictException('该邮箱已被注册');
+      if (!codeRecord) {
+        throw new BadRequestException('请先获取验证码');
       }
 
-      await tx.emailVerificationCode.update({
-        where: { id: codeRecord.id },
-        data: { consumed: true },
-      });
+      // 5 分钟过期检查
+      const isCodeExpired = codeRecord.expiresAt.getTime() < Date.now();
+      if (isCodeExpired) {
+        await this.prisma.emailVerificationCode.update({
+          where: { id: codeRecord.id },
+          data: { consumed: true },
+        });
+        throw new BadRequestException('验证码已过期，请重新获取');
+      }
 
-      // 处理邀请逻辑
-      let invitedById: number | null = null;
-      let initialBalance = 50; // 注册默认送 50
+      // 5 次错误检查
+      if (codeRecord.attempts >= MAX_ATTEMPTS) {
+        await this.prisma.emailVerificationCode.update({
+          where: { id: codeRecord.id },
+          data: { consumed: true },
+        });
+        throw new BadRequestException('错误次数过多，请重新获取验证码');
+      }
 
-      if (dto.inviteCode) {
-        const inviter = await tx.user.findUnique({ where: { inviteCode: dto.inviteCode } });
-        if (inviter) {
-          invitedById = inviter.id;
-          initialBalance += 20; // 填写邀请码额外送 20 积分
+      // 验证 code
+      const codeValid = await bcrypt.compare(dto.code, codeRecord.codeHash);
+      if (!codeValid) {
+        const newAttempts = codeRecord.attempts + 1;
+        await this.prisma.emailVerificationCode.update({
+          where: { id: codeRecord.id },
+          data: {
+            attempts: newAttempts,
+            consumed: newAttempts >= MAX_ATTEMPTS,
+          },
+        });
+        const remaining = MAX_ATTEMPTS - newAttempts;
+        throw new BadRequestException(`验证码错误${remaining > 0 ? `，剩余 ${remaining} 次机会` : '，请重新获取'}`);
+      }
 
-          // 给邀请人发放奖励
-          await tx.user.update({
-            where: { id: inviter.id },
-            data: { balance: { increment: 50 } }
-          });
+      // 验证通过 → 标记消费 + 创建用户（事务）
+      const hashed = await bcrypt.hash(dto.password, 10);
 
-          await tx.pointHistory.create({
-            data: {
-              userId: inviter.id,
-              amount: 50,
-              reason: 'invite_reward',
-              description: `邀请新用户 ${dto.username} 奖励`
-            }
-          });
+      const user = await this.prisma.$transaction(async (tx) => {
+        // 1. 检查用户名和邮箱是否已存在 (原子操作)
+        const usernameExists = await tx.user.findUnique({ where: { username: dto.username } });
+        if (usernameExists) {
+          throw new ConflictException('用户名已存在');
         }
-      }
 
-      const newUser = await tx.user.create({
-        data: {
-          username: dto.username,
-          email: dto.email,
-          password: hashed,
-          balance: initialBalance,
-          inviteCode: userInviteCode,
-          invitedById,
-        },
-      });
-
-      // 记录新用户的初始积分
-      await tx.pointHistory.create({
-        data: {
-          userId: newUser.id,
-          amount: initialBalance,
-          reason: 'register_reward',
-          description: invitedById ? '注册并填写邀请码奖励' : '注册奖励'
+        const emailExists = await tx.user.findUnique({ where: { email: dto.email } });
+        if (emailExists) {
+          throw new ConflictException('该邮箱已被注册');
         }
+
+        // 处理邀请逻辑
+        let invitedById: number | null = null;
+        let initialBalance = 50; // 注册默认送 50
+
+        if (dto.inviteCode) {
+          const inviter = await tx.user.findUnique({ where: { inviteCode: dto.inviteCode } });
+          if (inviter) {
+            invitedById = inviter.id;
+            initialBalance += 20; // 填写邀请码额外送 20 积分
+
+            // 给邀请人发放奖励
+            await tx.user.update({
+              where: { id: inviter.id },
+              data: { balance: { increment: 50 } }
+            });
+
+            await tx.pointHistory.create({
+              data: {
+                userId: inviter.id,
+                amount: 50,
+                reason: 'invite_reward',
+                description: `邀请新用户 ${dto.username} 奖励`
+              }
+            });
+          } else {
+            throw new BadRequestException('邀请码无效');
+          }
+        }
+
+        // 重试生成唯一邀请码（最多 3 次）
+        let userInviteCode = crypto.randomBytes(4).toString('hex');
+        let inviteCodeExists = await tx.user.findUnique({ where: { inviteCode: userInviteCode } });
+        let retryCount = 1;
+
+        while (inviteCodeExists && retryCount < 3) {
+          userInviteCode = crypto.randomBytes(4).toString('hex');
+          inviteCodeExists = await tx.user.findUnique({ where: { inviteCode: userInviteCode } });
+          retryCount++;
+        }
+
+        if (inviteCodeExists) {
+          throw new HttpException('服务器繁忙，请稍后重试', HttpStatus.SERVICE_UNAVAILABLE);
+        }
+
+        await tx.emailVerificationCode.update({
+          where: { id: codeRecord.id },
+          data: { consumed: true },
+        });
+
+        const newUser = await tx.user.create({
+          data: {
+            username: dto.username,
+            email: dto.email,
+            password: hashed,
+            balance: initialBalance,
+            inviteCode: userInviteCode,
+            invitedById,
+          },
+        });
+
+        // 记录新用户的初始积分
+        await tx.pointHistory.create({
+          data: {
+            userId: newUser.id,
+            amount: initialBalance,
+            reason: 'register_reward',
+            description: invitedById ? '注册并填写邀请码奖励' : '注册奖励'
+          }
+        });
+
+        return newUser;
       });
 
-      return newUser;
-    });
-
-    return this.issueToken(user.id, user.username, user.balance, user.role);
+      return this.issueToken(user.id, user.username, user.balance, user.role);
+    } catch (error) {
+      // 重新抛出已知的异常类型
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      // 记录未知错误并抛出通用异常
+      Logger.error('注册过程中发生错误', error.stack, 'AuthService');
+      throw new HttpException('注册失败，请稍后重试', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   async login(dto: LoginDto) {
