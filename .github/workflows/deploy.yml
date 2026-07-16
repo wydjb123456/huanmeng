@@ -33,3 +33,5 @@ jobs:
             tail -n 100 /var/log/nginx/error.log
             echo "<<<<< Client Directory Listing >>>>>"
             ls -l /www/huanmeng/client/
+
+            # Re-run diagnostics
