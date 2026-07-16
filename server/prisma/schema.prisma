@@ -191,8 +191,33 @@ model PointHistory {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   amount      Int      // 正数表示增加，负数表示扣除
   reason      String   // 例如：check_in, invite_reward, invitee_reward, consume
-  description String?  // 具体描述
+  description String?
   createdAt   DateTime @default(now())
 
   @@index([userId])
+}
+
+model Order {
+  id          Int       @id @default(autoincrement())
+  orderNo     String    @unique
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Int       // 支付金额（分）
+  points      Int       // 获得的积分
+  status      OrderStatus @default(pending)
+  payType     String?   // wechat/alipay
+  tradeNo     String?   // 第三方交易号
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([orderNo])
+}
+
+enum OrderStatus {
+  pending
+  paid
+  expired
+  failed
 }

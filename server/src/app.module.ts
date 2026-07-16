@@ -10,6 +10,7 @@ import { CouponsModule } from './coupons/coupons.module';
 import { AdminModule } from './admin/admin.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     AdminModule,
     RewardsModule,
     AnnouncementsModule,
+    PaymentModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

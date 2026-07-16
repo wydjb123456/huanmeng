@@ -229,8 +229,9 @@
           <div
             v-for="pkg in packages"
             :key="pkg.name"
-            class="border rounded-lg p-3 flex flex-col"
-            :class="pkg.featured ? 'border-primary-500 bg-primary-50/50 ring-1 ring-primary-300' : 'border-ink-200'"
+            class="border rounded-lg p-3 flex flex-col cursor-pointer transition-all hover:shadow-md"
+            :class="pkg.featured ? 'border-primary-500 bg-primary-50/50 ring-1 ring-primary-300 hover:ring-2' : 'border-ink-200 hover:border-primary-300'"
+            @click="buyPackage(pkg.name)"
           >
             <div v-if="pkg.featured" class="text-[10px] text-primary-600 font-semibold mb-1">热门</div>
             <div class="font-serif-cn text-sm text-ink-900 mb-1">{{ pkg.name }}</div>
@@ -239,6 +240,7 @@
             <div class="text-xs text-ink-500 line-through" v-if="pkg.original">原价 ¥{{ pkg.original }}</div>
             <div class="text-sm font-semibold text-primary-700 mt-auto">¥{{ pkg.price }}</div>
             <div class="text-[10px] text-ink-400 mt-0.5">{{ pkg.note }}</div>
+            <div class="mt-2 text-xs text-ink-500">点击购买 →</div>
           </div>
         </div>
       </section>
@@ -274,9 +276,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { useUserStore } from '@/stores/user';
 import { couponsApi } from '@/api/coupons';
+import { paymentApi } from '@/api/payment';
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
@@ -296,6 +299,7 @@ watch(visible, (v) => emit('update:modelValue', v));
 const userStore = useUserStore();
 const redeemCode = ref('');
 const redeeming = ref(false);
+const paying = ref(false);
 const contactQrUrl = '/contact-qr.jpg?v=2';
 const qrVisible = ref(true);
 
@@ -321,6 +325,88 @@ async function submitRedeem() {
     // handled by interceptor
   } finally {
     redeeming.value = false;
+  }
+}
+
+// 购买套餐
+const packageMap: Record<string, { id: string; name: string; points: number; price: number }> = {
+  '体验包': { id: 'trial', name: '体验包', points: 50, price: 5 },
+  '基础包': { id: 'basic', name: '基础包', points: 200, price: 18 },
+  '标准包': { id: 'standard', name: '标准包', points: 500, price: 40 },
+  '专业包': { id: 'pro', name: '专业包', points: 1500, price: 100 },
+  '旗舰包': { id: 'premium', name: '旗舰包', points: 5000, price: 300 },
+  '活动包': { id: 'promo', name: '活动包', points: 20, price: 2 },
+};
+
+async function buyPackage(pkgName: string) {
+  const pkg = packageMap[pkgName];
+  if (!pkg) return;
+
+  if (!isLoggedIn.value) {
+    ElMessage.warning('请先登录');
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确认购买「${pkg.name}」？支付 ¥${pkg.price}，获得 ${pkg.points} 积分`,
+      '确认购买',
+      {
+        confirmButtonText: '立即支付',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    const { value: payType } = await ElMessageBox.radio(
+      '请选择支付方式',
+      '支付方式',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        options: [
+          { value: 'wechat', label: '微信支付' },
+          { value: 'alipay', label: '支付宝' },
+        ],
+      }
+    );
+
+    paying.value = true;
+    const result = await paymentApi.createOrder({
+      packageId: pkg.id,
+      payType: payType as 'wechat' | 'alipay',
+    });
+
+    // 打开支付页面
+    window.open(result.payUrl, '_blank');
+
+    // 轮询订单状态
+    let pollCount = 0;
+    const pollInterval = setInterval(async () => {
+      pollCount++;
+      try {
+        const order = await paymentApi.getOrder(result.orderNo);
+        if (order.status === 'paid') {
+          clearInterval(pollInterval);
+          ElMessage.success('支付成功！积分已到账');
+          await userStore.fetchUserInfo();
+          paying.value = false;
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      if (pollCount > 60) {
+        clearInterval(pollInterval);
+        paying.value = false;
+        ElMessage.info('请稍后手动刷新查看积分是否到账');
+      }
+    }, 2000);
+
+  } catch (e) {
+    // 用户取消
+  } finally {
+    paying.value = false;
   }
 }
 
