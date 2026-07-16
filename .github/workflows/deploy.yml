@@ -27,3 +27,9 @@ jobs:
             npm install
             npm run build
             pm2 restart huanmeng
+            echo "<<<<< PM2 Logs >>>>>"
+            pm2 logs huanmeng --lines 100
+            echo "<<<<< Nginx Error Logs >>>>>"
+            tail -n 100 /var/log/nginx/error.log
+            echo "<<<<< Client Directory Listing >>>>>"
+            ls -l /www/huanmeng/client/
